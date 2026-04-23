@@ -16,6 +16,7 @@ from lerobot.datasets.lerobot_dataset import LeRobotDataset, LeRobotDatasetMetad
 from lerobot.datasets.feature_utils import dataset_to_policy_features
 from lerobot.policies.act.configuration_act import ACTConfig
 from lerobot.policies.act.modeling_act import ACTPolicy
+from lerobot.datasets.factory import resolve_delta_timestamps
 from lerobot.policies.factory import make_pre_post_processors
 
 from configs import EXPERIMENTS, apply_canny
@@ -84,7 +85,8 @@ def main(experiment_name: str):
         use_vae=exp.use_vae,
     )
 
-    dataset = LeRobotDataset(dataset_id, root=dataset_local_dir)
+    delta_timestamps = resolve_delta_timestamps(cfg, dataset_meta)
+    dataset = LeRobotDataset(dataset_id, root=dataset_local_dir, delta_timestamps=delta_timestamps)
     dataloader = torch.utils.data.DataLoader(
         dataset,
         batch_size=exp.batch_size,
