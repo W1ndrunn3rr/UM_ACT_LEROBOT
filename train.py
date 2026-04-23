@@ -44,7 +44,7 @@ def main(experiment_name: str):
         snapshot_download(
             repo_id=dataset_id,
             repo_type="dataset",
-            local_dir=dataset_root,
+            local_dir=Path(dataset_root) / dataset_id if dataset_root else None,
         )
         wandb.init(
             project="pick_and_lift",
