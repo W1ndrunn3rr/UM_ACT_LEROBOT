@@ -3,6 +3,8 @@ import sys
 import time
 from pathlib import Path
 
+from tqdm import tqdm
+
 import torch
 import torch.backends.cudnn
 import wandb
@@ -107,6 +109,7 @@ def main(experiment_name: str):
 
     step = 0
     data_iter = iter(dataloader)
+    pbar = tqdm(total=exp.steps, desc=exp.name, disable=not accelerator.is_main_process)
 
     while step < exp.steps:
         try:
@@ -131,11 +134,10 @@ def main(experiment_name: str):
 
         step += 1
         step_time = time.perf_counter() - t0
+        pbar.update(1)
 
         if accelerator.is_main_process and step % exp.log_freq == 0:
-            print(
-                f"[{exp.name}] step {step:>6} | loss {loss.item():.4f} | grad_norm {grad_norm.item():.3f} | {step_time * 1000:.0f}ms"
-            )
+            pbar.set_postfix(loss=f"{loss.item():.4f}", grad=f"{grad_norm.item():.3f}", ms=f"{step_time*1000:.0f}")
             wandb.log(
                 {
                     "loss": loss.item(),
@@ -155,6 +157,8 @@ def main(experiment_name: str):
             print(f"Saved checkpoint to {ckpt}")
 
         accelerator.wait_for_everyone()
+
+    pbar.close()
 
     if accelerator.is_main_process:
         accelerator.unwrap_model(policy).push_to_hub(policy_repo_id)
