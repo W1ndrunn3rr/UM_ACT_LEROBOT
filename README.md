@@ -22,7 +22,6 @@ Copy `.env.example` to `.env` and fill in the values:
 
 ```
 DATASET_ID=<hf-dataset-repo-id>        # e.g. username/dataset-name
-DATASET_ROOT=<local-path-to-dataset>   # local cache directory
 POLICY_REPO_ID=<hf-model-repo-prefix>  # e.g. username/act — experiment name appended automatically
 HF_TOKEN=hf_...                        # Hugging Face write token
 ```

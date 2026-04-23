@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/kuba/Git/UM_ACT_LEROBOT/train.py", line 14, in <module>
+    from lerobot.configs import FeatureType
+ImportError: cannot import name 'FeatureType' from 'lerobot.configs' (unknown location)

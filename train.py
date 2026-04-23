@@ -11,11 +11,12 @@ from accelerate.utils import DistributedDataParallelKwargs
 from dotenv import load_dotenv
 from huggingface_hub import snapshot_download
 
-from lerobot.configs import FeatureType
-from lerobot.datasets import LeRobotDataset, LeRobotDatasetMetadata
-from lerobot.policies.act import ACTConfig, ACTPolicy
-from lerobot.policies import make_pre_post_processors
-from lerobot.utils.feature_utils import dataset_to_policy_features
+from lerobot.configs.types import FeatureType
+from lerobot.datasets.lerobot_dataset import LeRobotDataset, LeRobotDatasetMetadata
+from lerobot.datasets.feature_utils import dataset_to_policy_features
+from lerobot.policies.act.configuration_act import ACTConfig
+from lerobot.policies.act.modeling_act import ACTPolicy
+from lerobot.policies.factory import make_pre_post_processors
 
 from configs import EXPERIMENTS, apply_canny
 
@@ -29,7 +30,7 @@ def main(experiment_name: str):
 
     exp = EXPERIMENTS[experiment_name]
     dataset_id = os.environ["DATASET_ID"]
-    dataset_root = os.environ["DATASET_ROOT"]
+    dataset_root = os.environ.get("DATASET_ROOT", None)
     policy_repo_id = f"{os.environ['POLICY_REPO_ID']}_{exp.name}"
     output_dir = Path(f"outputs/train/{exp.name}")
 
