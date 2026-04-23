@@ -31,6 +31,7 @@ def main(experiment_name: str):
     exp = EXPERIMENTS[experiment_name]
     dataset_id = os.environ["DATASET_ID"]
     dataset_root = os.environ.get("DATASET_ROOT", None)
+    dataset_local_dir = Path(dataset_root) / dataset_id if dataset_root else None
     policy_repo_id = f"{os.environ['POLICY_REPO_ID']}_{exp.name}"
     output_dir = Path(f"outputs/train/{exp.name}")
 
@@ -44,7 +45,7 @@ def main(experiment_name: str):
         snapshot_download(
             repo_id=dataset_id,
             repo_type="dataset",
-            local_dir=Path(dataset_root) / dataset_id if dataset_root else None,
+            local_dir=dataset_local_dir,
         )
         wandb.init(
             project="pick_and_lift",
@@ -64,10 +65,10 @@ def main(experiment_name: str):
     accelerator.wait_for_everyone()
 
     if accelerator.is_main_process:
-        dataset_meta = LeRobotDatasetMetadata(dataset_id, root=dataset_root)
+        dataset_meta = LeRobotDatasetMetadata(dataset_id, root=dataset_local_dir)
     accelerator.wait_for_everyone()
     if not accelerator.is_main_process:
-        dataset_meta = LeRobotDatasetMetadata(dataset_id, root=dataset_root)
+        dataset_meta = LeRobotDatasetMetadata(dataset_id, root=dataset_local_dir)
 
     features = dataset_to_policy_features(dataset_meta.features)
     output_features = {
@@ -83,7 +84,7 @@ def main(experiment_name: str):
         use_vae=exp.use_vae,
     )
 
-    dataset = LeRobotDataset(dataset_id, root=dataset_root)
+    dataset = LeRobotDataset(dataset_id, root=dataset_local_dir)
     dataloader = torch.utils.data.DataLoader(
         dataset,
         batch_size=exp.batch_size,
