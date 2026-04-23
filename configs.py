@@ -16,7 +16,7 @@ class ExperimentConfig:
     steps: int = 100_000
     batch_size: int = 8
     lr: float = 1e-4
-    grad_clip_norm: float = 10.0
+    grad_clip_norm: float = 1.0
     log_freq: int = 100
     save_freq: int = 10_000
 

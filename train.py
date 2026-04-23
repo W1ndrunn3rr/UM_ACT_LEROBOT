@@ -37,7 +37,7 @@ def main(experiment_name: str):
     output_dir = Path(f"outputs/train/{exp.name}")
 
     accelerator = Accelerator(
-        mixed_precision="fp16",
+        mixed_precision="bf16",
         kwargs_handlers=[DistributedDataParallelKwargs(find_unused_parameters=True)],
     )
 
