@@ -19,9 +19,9 @@ else
 fi
 
 EXPERIMENTS=(
-    "baseline"
-    "resnet50_scratch"
-    "resnet50_pretrained"
+    # "baseline"
+    "resnet34_scratch"
+    "resnet34_pretrained"
     "canny"
     "no_vae"
 )

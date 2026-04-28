@@ -41,17 +41,17 @@ EXPERIMENTS: dict[str, ExperimentConfig] = {
         use_vae=False,
         use_canny=False,
     ),
-    "resnet50_scratch": ExperimentConfig(
-        name="resnet50_scratch",
-        vision_backbone="resnet50",
+    "resnet34_scratch": ExperimentConfig(
+        name="resnet34_scratch",
+        vision_backbone="resnet34",
         pretrained_backbone_weights=None,
         use_vae=True,
         use_canny=False,
     ),
-    "resnet50_pretrained": ExperimentConfig(
-        name="resnet50_pretrained",
-        vision_backbone="resnet50",
-        pretrained_backbone_weights="ResNet50_Weights.IMAGENET1K_V2",
+    "resnet34_pretrained": ExperimentConfig(
+        name="resnet34_pretrained",
+        vision_backbone="resnet34",
+        pretrained_backbone_weights="ResNet34_Weights.IMAGENET1K_V1",
         use_vae=True,
         use_canny=False,
     ),

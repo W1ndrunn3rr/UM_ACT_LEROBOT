@@ -7,8 +7,8 @@ Training [ACT](https://github.com/huggingface/lerobot) policies on a pick-and-li
 | Name | Backbone | VAE | Canny |
 |------|----------|-----|-------|
 | `baseline` | ResNet18 | yes | no |
-| `resnet50_scratch` | ResNet50 | yes | no |
-| `resnet50_pretrained` | ResNet50 | yes | no |
+| `resnet34_scratch` | ResNet34 | yes | no |
+| `resnet34_pretrained` | ResNet34 | yes | no |
 | `canny` | ResNet18 | yes | yes |
 | `no_vae` | ResNet18 | no | no |
 
@@ -40,8 +40,8 @@ wandb login
 "$VIRTUAL_ENV/bin/python" train.py <experiment_name>
 # e.g.
 "$VIRTUAL_ENV/bin/python" train.py baseline
-"$VIRTUAL_ENV/bin/python" train.py resnet50_scratch
-"$VIRTUAL_ENV/bin/python" train.py resnet50_pretrained
+"$VIRTUAL_ENV/bin/python" train.py resnet34_scratch
+"$VIRTUAL_ENV/bin/python" train.py resnet34_pretrained
 ```
 
 **Supported ResNet experiments sequentially:**
