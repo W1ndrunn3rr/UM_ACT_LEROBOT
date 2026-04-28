@@ -105,6 +105,13 @@ def main(experiment_name: str):
         cfg, dataset_stats=dataset_meta.stats
     )
     optimizer = torch.optim.AdamW(policy.parameters(), lr=exp.lr, fused=True)
+    plateau_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer,
+        mode="min",
+        factor=exp.lr_plateau_factor,
+        patience=exp.lr_plateau_patience,
+        min_lr=exp.min_lr,
+    )
     policy, optimizer, dataloader = accelerator.prepare(policy, optimizer, dataloader)
 
     step = 0
@@ -128,10 +135,30 @@ def main(experiment_name: str):
         with accelerator.autocast():
             loss, _ = policy(batch)
 
+        if not torch.isfinite(loss):
+            if accelerator.is_main_process:
+                print(f"Non-finite loss at step {step + 1}: {loss.item()}. Stopping training.")
+            break
+
         optimizer.zero_grad(set_to_none=True)
         accelerator.backward(loss)
         grad_norm = accelerator.clip_grad_norm_(policy.parameters(), exp.grad_clip_norm)
+
+        if not torch.isfinite(grad_norm):
+            if accelerator.is_main_process:
+                print(f"Non-finite grad norm at step {step + 1}: {grad_norm.item()}. Skipping optimizer step.")
+            optimizer.zero_grad(set_to_none=True)
+            continue
+
+        if step < exp.warmup_steps:
+            warmup_scale = (step + 1) / max(exp.warmup_steps, 1)
+            for param_group in optimizer.param_groups:
+                param_group["lr"] = exp.lr * warmup_scale
+
         optimizer.step()
+
+        if step >= exp.warmup_steps:
+            plateau_scheduler.step(loss.detach().float().item())
 
         step += 1
         step_time = time.perf_counter() - t0
@@ -143,6 +170,7 @@ def main(experiment_name: str):
                 {
                     "loss": loss.item(),
                     "grad_norm": grad_norm.item(),
+                    "lr": optimizer.param_groups[0]["lr"],
                     "step_time_ms": step_time * 1000,
                 },
                 step=step,
