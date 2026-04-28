@@ -9,6 +9,7 @@ dependencies = [
     "dotenv>=0.9.9",
     "lerobot[dataset]>=0.4.4",
     "python-dotenv>=1.2.2",
+    "timm>=1.0.26",
     "torch>=2.10.0",
     "wandb>=0.24.2",
 ]

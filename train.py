@@ -119,13 +119,14 @@ def main(experiment_name: str):
             batch = next(data_iter)
 
         t0 = time.perf_counter()
-        batch = preprocessor(batch)
 
         if exp.use_canny:
             batch = apply_canny(batch, exp.canny_low, exp.canny_high)
 
+        batch = preprocessor(batch)
+
         with accelerator.autocast():
-            loss, _ = accelerator.unwrap_model(policy).forward(batch)
+            loss, _ = policy(batch)
 
         optimizer.zero_grad(set_to_none=True)
         accelerator.backward(loss)

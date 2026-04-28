@@ -36,10 +36,10 @@ EXPERIMENTS: dict[str, ExperimentConfig] = {
         use_vae=True,
         use_canny=False,
     ),
-    "efficientnet_b3": ExperimentConfig(
-        name="efficientnet_b3",
-        vision_backbone="efficientnet_b3",
-        pretrained_backbone_weights="timm:efficientnet_b3.ra2_in1k",
+    "efficientnet_b0": ExperimentConfig(
+        name="efficientnet_b0",
+        vision_backbone="efficientnet_b0",
+        pretrained_backbone_weights="timm:efficientnet_b0.ra_in1k",
         use_vae=True,
         use_canny=False,
     ),
@@ -68,11 +68,12 @@ def apply_canny(batch: dict, low: int, high: int) -> dict:
             continue
         imgs = batch[key]
         B, C, H, W = imgs.shape
-        out = torch.zeros(B, 1, H, W, dtype=imgs.dtype, device=imgs.device)
+        out = torch.zeros(B, 3, H, W, dtype=imgs.dtype, device=imgs.device)
         for i in range(B):
             img_np = (imgs[i].permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
             gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
             edges = cv2.Canny(gray, low, high)
-            out[i, 0] = torch.from_numpy(edges).float() / 255.0
+            edge_tensor = torch.from_numpy(edges).to(device=imgs.device, dtype=imgs.dtype) / 255.0
+            out[i] = edge_tensor.unsqueeze(0).repeat(3, 1, 1)
         batch[key] = out
     return batch
