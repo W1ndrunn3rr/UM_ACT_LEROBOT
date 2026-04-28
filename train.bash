@@ -1,26 +1,39 @@
 #!/bin/bash
-set -uo pipefail
+set -euo pipefail
 
-if ! command -v wandb >/dev/null 2>&1; then
-    echo "ERROR: wandb is not installed or not in PATH"
+if [[ -x ".venv/bin/python" ]]; then
+    PYTHON_BIN=".venv/bin/python"
+elif command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="$(command -v python3)"
+elif command -v python >/dev/null 2>&1; then
+    PYTHON_BIN="$(command -v python)"
+else
+    echo "ERROR: no Python interpreter found"
     exit 1
 fi
 
 if [[ -n "${WANDB_API_KEY:-}" ]]; then
-    wandb login --relogin "$WANDB_API_KEY"
+    "$PYTHON_BIN" -m wandb login --relogin "$WANDB_API_KEY"
 else
     echo "wandb login skipped: using existing local login if available."
 fi
 
-EXPERIMENTS=("baseline" "mobilenetv3_small" "efficientnet_b0" "canny" "no_vae")
+EXPERIMENTS=(
+    "baseline"
+    "resnet50_scratch"
+    "resnet50_pretrained"
+    "canny"
+    "no_vae"
+)
 LOG_DIR="logs"
 STATUS_FILE="$LOG_DIR/train_status_$(date +%Y%m%d_%H%M%S).log"
 mkdir -p "$LOG_DIR"
 
 echo "=========================================="
-echo "  LeRobot ACT - Training all experiments"
+echo "  LeRobot ACT - Training supported ResNet experiments"
 echo "  $(date)"
 echo "=========================================="
+echo "Python: $PYTHON_BIN"
 echo "Run status log: $STATUS_FILE"
 echo ""
 
@@ -36,7 +49,7 @@ for EXP in "${EXPERIMENTS[@]}"; do
 
     LOG_FILE="$LOG_DIR/${EXP}_$(date +%Y%m%d_%H%M%S).log"
 
-    if python train.py "$EXP" 2>&1 | tee "$LOG_FILE"; then
+    if "$PYTHON_BIN" train.py "$EXP" 2>&1 | tee "$LOG_FILE"; then
         echo "DONE: $EXP"
         echo "$(date '+%Y-%m-%d %H:%M:%S') | SUCCESS | $EXP | $LOG_FILE" >> "$STATUS_FILE"
         SUCCESS_COUNT=$((SUCCESS_COUNT + 1))

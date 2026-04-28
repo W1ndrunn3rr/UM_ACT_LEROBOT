@@ -32,6 +32,12 @@ def main(experiment_name: str):
     load_dotenv()
 
     exp = EXPERIMENTS[experiment_name]
+    if not exp.vision_backbone.startswith("resnet"):
+        raise ValueError(
+            f"Experiment '{experiment_name}' uses unsupported ACT backbone "
+            f"'{exp.vision_backbone}'. Use one of the ResNet-based experiments: "
+            f"{[name for name, cfg in EXPERIMENTS.items() if cfg.vision_backbone.startswith('resnet')]}."
+        )
     dataset_id = os.environ["DATASET_ID"]
     dataset_root = os.environ.get("DATASET_ROOT", None)
     dataset_local_dir = Path(dataset_root) / dataset_id if dataset_root else None

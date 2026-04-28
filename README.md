@@ -1,14 +1,14 @@
 # UM ACT LeRobot
 
-Training [ACT](https://github.com/huggingface/lerobot) policies with alternative vision backbones on a pick-and-lift task.
+Training [ACT](https://github.com/huggingface/lerobot) policies on a pick-and-lift task.
 
 ## Experiments
 
 | Name | Backbone | VAE | Canny |
 |------|----------|-----|-------|
 | `baseline` | ResNet18 | yes | no |
-| `mobilenetv3_small` | MobileNetV3-Small | yes | no |
-| `efficientnet_b3` | EfficientNet-B3 | yes | no |
+| `resnet50_scratch` | ResNet50 | yes | no |
+| `resnet50_pretrained` | ResNet50 | yes | no |
 | `canny` | ResNet18 | yes | yes |
 | `no_vae` | ResNet18 | no | no |
 
@@ -37,12 +37,14 @@ wandb login
 **Single experiment:**
 
 ```bash
-python train.py <experiment_name>
+"$VIRTUAL_ENV/bin/python" train.py <experiment_name>
 # e.g.
-python train.py baseline
+"$VIRTUAL_ENV/bin/python" train.py baseline
+"$VIRTUAL_ENV/bin/python" train.py resnet50_scratch
+"$VIRTUAL_ENV/bin/python" train.py resnet50_pretrained
 ```
 
-**All experiments sequentially:**
+**Supported ResNet experiments sequentially:**
 
 ```bash
 chmod +x train.bash
