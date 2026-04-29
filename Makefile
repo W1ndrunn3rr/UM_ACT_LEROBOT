@@ -35,12 +35,12 @@ help:
 	@echo "Defaults: MODEL=$(MODEL) ROBOT_PORT=$(ROBOT_PORT) ROBOT_ID=$(ROBOT_ID)"
 
 train:
-	$(PYTHON_BIN) -m src.scripts.train $(EXP)
+	accelerate launch --num_processes=2 --multi_gpu -m src.scripts.train $(EXP)
 
 train-all:
 	@for exp in $(EXPERIMENTS); do \
 		echo "==> $$exp"; \
-		$(PYTHON_BIN) -m src.scripts.train $$exp || exit $$?; \
+		accelerate launch --num_processes=2 --multi_gpu -m src.scripts.train $$exp || exit $$?; \
 	done
 
 eval:

@@ -18,8 +18,8 @@ class ExperimentConfig:
     blur_kernel_size: int = 5
     downsample_size: Optional[int] = None
     steps: int = 50_000
-    batch_size: int = 12
-    lr: float = 7.5e-5
+    batch_size: int = 8
+    lr: float = 5e-5
     grad_clip_norm: float = 0.5
     warmup_steps: int = 2_000
     lr_plateau_factor: float = 0.5
