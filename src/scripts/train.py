@@ -43,6 +43,8 @@ def main(experiment_name: str):
     dataset_local_dir = Path(dataset_root) / dataset_id if dataset_root else None
     policy_repo_id = f"{os.environ['POLICY_REPO_ID']}_{exp.name}"
     output_dir = Path(f"outputs/train/{exp.name}")
+    wandb_project = os.environ.get("WANDB_PROJECT", "pick_and_lift")
+    wandb_entity = os.environ.get("WANDB_ENTITY")
 
     accelerator = Accelerator(
         mixed_precision="bf16",
@@ -57,7 +59,8 @@ def main(experiment_name: str):
             local_dir=dataset_local_dir,
         )
         wandb.init(
-            project="pick_and_lift",
+            entity=wandb_entity,
+            project=wandb_project,
             name=exp.name,
             config={
                 "experiment": exp.name,

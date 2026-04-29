@@ -18,8 +18,8 @@ class ExperimentConfig:
     blur_kernel_size: int = 5
     downsample_size: Optional[int] = None
     steps: int = 50_000
-    batch_size: int = 8
-    lr: float = 5e-5
+    batch_size: int = 16
+    lr: float = 1e-4
     grad_clip_norm: float = 0.5
     warmup_steps: int = 2_000
     lr_plateau_factor: float = 0.5
@@ -30,13 +30,13 @@ class ExperimentConfig:
 
 
 EXPERIMENTS: dict[str, ExperimentConfig] = {
-    # "baseline": ExperimentConfig(
-    #     name="baseline",
-    #     vision_backbone="resnet18",
-    #     pretrained_backbone_weights="ResNet18_Weights.IMAGENET1K_V1",
-    #     use_vae=True,
-    #     image_transform="rgb",
-    # ),
+    "baseline": ExperimentConfig(
+        name="baseline",
+        vision_backbone="resnet18",
+        pretrained_backbone_weights="ResNet18_Weights.IMAGENET1K_V1",
+        use_vae=True,
+        image_transform="rgb",
+    ),
     "baseline_no_vae": ExperimentConfig(
         name="baseline_no_vae",
         vision_backbone="resnet18",
@@ -44,15 +44,15 @@ EXPERIMENTS: dict[str, ExperimentConfig] = {
         use_vae=False,
         image_transform="rgb",
     ),
-    # "canny": ExperimentConfig(
-    #     name="canny",
-    #     vision_backbone="resnet18",
-    #     pretrained_backbone_weights="ResNet18_Weights.IMAGENET1K_V1",
-    #     use_vae=True,
-    #     image_transform="canny",
-    #     canny_low=50,
-    #     canny_high=150,
-    # ),
+    "canny": ExperimentConfig(
+        name="canny",
+        vision_backbone="resnet18",
+        pretrained_backbone_weights="ResNet18_Weights.IMAGENET1K_V1",
+        use_vae=True,
+        image_transform="canny",
+        canny_low=50,
+        canny_high=150,
+    ),
     "canny_no_vae": ExperimentConfig(
         name="canny_no_vae",
         vision_backbone="resnet18",
