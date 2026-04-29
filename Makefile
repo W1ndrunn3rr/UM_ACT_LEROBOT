@@ -1,5 +1,5 @@
 PYTHON_BIN := $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
-EXPERIMENTS := baseline grayscale canny sobel blur_canny downsample_84
+EXPERIMENTS := baseline baseline_no_vae canny canny_no_vae grayscale sobel blur_canny downsample_84
 
 FOLLOWER_PORT ?= /dev/tty.usbmodem5AAF2630541
 LEADER_PORT ?= /dev/tty.usbmodem5AAF2634711

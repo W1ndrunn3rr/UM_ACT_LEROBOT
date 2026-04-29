@@ -30,12 +30,37 @@ class ExperimentConfig:
 
 
 EXPERIMENTS: dict[str, ExperimentConfig] = {
-    "baseline": ExperimentConfig(
-        name="baseline",
+    # "baseline": ExperimentConfig(
+    #     name="baseline",
+    #     vision_backbone="resnet18",
+    #     pretrained_backbone_weights="ResNet18_Weights.IMAGENET1K_V1",
+    #     use_vae=True,
+    #     image_transform="rgb",
+    # ),
+    "baseline_no_vae": ExperimentConfig(
+        name="baseline_no_vae",
         vision_backbone="resnet18",
         pretrained_backbone_weights="ResNet18_Weights.IMAGENET1K_V1",
-        use_vae=True,
+        use_vae=False,
         image_transform="rgb",
+    ),
+    # "canny": ExperimentConfig(
+    #     name="canny",
+    #     vision_backbone="resnet18",
+    #     pretrained_backbone_weights="ResNet18_Weights.IMAGENET1K_V1",
+    #     use_vae=True,
+    #     image_transform="canny",
+    #     canny_low=50,
+    #     canny_high=150,
+    # ),
+    "canny_no_vae": ExperimentConfig(
+        name="canny_no_vae",
+        vision_backbone="resnet18",
+        pretrained_backbone_weights="ResNet18_Weights.IMAGENET1K_V1",
+        use_vae=False,
+        image_transform="canny",
+        canny_low=50,
+        canny_high=150,
     ),
     "grayscale": ExperimentConfig(
         name="grayscale",
@@ -43,15 +68,6 @@ EXPERIMENTS: dict[str, ExperimentConfig] = {
         pretrained_backbone_weights="ResNet18_Weights.IMAGENET1K_V1",
         use_vae=True,
         image_transform="grayscale",
-    ),
-    "canny": ExperimentConfig(
-        name="canny",
-        vision_backbone="resnet18",
-        pretrained_backbone_weights="ResNet18_Weights.IMAGENET1K_V1",
-        use_vae=True,
-        image_transform="canny",
-        canny_low=50,
-        canny_high=150,
     ),
     "sobel": ExperimentConfig(
         name="sobel",
@@ -81,12 +97,9 @@ EXPERIMENTS: dict[str, ExperimentConfig] = {
 }
 
 
-def _to_three_channels(img_2d: np.ndarray, *, dtype: torch.dtype, device: torch.device) -> torch.Tensor:
-    tensor = torch.from_numpy(img_2d).to(device=device, dtype=dtype) / 255.0
-    return tensor.unsqueeze(0).repeat(3, 1, 1)
-
-
-def _apply_transform_to_rgb_uint8_image(image_rgb: np.ndarray, exp: ExperimentConfig) -> np.ndarray:
+def _apply_transform_to_rgb_uint8_image(
+    image_rgb: np.ndarray, exp: ExperimentConfig
+) -> np.ndarray:
     if exp.image_transform == "rgb":
         return image_rgb
 
@@ -109,7 +122,9 @@ def _apply_transform_to_rgb_uint8_image(image_rgb: np.ndarray, exp: ExperimentCo
         grad_x = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
         grad_y = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
         grad_mag = cv2.magnitude(grad_x, grad_y)
-        image_2d = cv2.normalize(grad_mag, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+        image_2d = cv2.normalize(grad_mag, None, 0, 255, cv2.NORM_MINMAX).astype(
+            np.uint8
+        )
     elif exp.image_transform == "blur_canny":
         kernel = max(1, exp.blur_kernel_size)
         if kernel % 2 == 0:
@@ -122,11 +137,15 @@ def _apply_transform_to_rgb_uint8_image(image_rgb: np.ndarray, exp: ExperimentCo
     return np.repeat(image_2d[:, :, None], 3, axis=2)
 
 
-def apply_image_transform_to_array(image_rgb: np.ndarray, transform_name: str) -> np.ndarray:
+def apply_image_transform_to_array(
+    image_rgb: np.ndarray, transform_name: str
+) -> np.ndarray:
     if transform_name == "none":
         return image_rgb
     if transform_name not in EXPERIMENTS:
-        raise ValueError(f"Unknown transform '{transform_name}'. Available: {sorted(EXPERIMENTS)}")
+        raise ValueError(
+            f"Unknown transform '{transform_name}'. Available: {sorted(EXPERIMENTS)}"
+        )
     return _apply_transform_to_rgb_uint8_image(image_rgb, EXPERIMENTS[transform_name])
 
 
@@ -141,7 +160,9 @@ def apply_image_transform(batch: dict, exp: ExperimentConfig) -> dict:
         imgs = batch[key]
         if exp.image_transform == "downsample":
             if exp.downsample_size is None:
-                raise ValueError(f"Experiment '{exp.name}' is missing `downsample_size`.")
+                raise ValueError(
+                    f"Experiment '{exp.name}' is missing `downsample_size`."
+                )
             batch[key] = F.interpolate(
                 imgs,
                 size=(exp.downsample_size, exp.downsample_size),
@@ -156,7 +177,9 @@ def apply_image_transform(batch: dict, exp: ExperimentConfig) -> dict:
             img_np = (imgs[i].permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
             transformed = _apply_transform_to_rgb_uint8_image(img_np, exp)
             out[i] = (
-                torch.from_numpy(transformed).to(device=imgs.device, dtype=imgs.dtype).permute(2, 0, 1)
+                torch.from_numpy(transformed)
+                .to(device=imgs.device, dtype=imgs.dtype)
+                .permute(2, 0, 1)
                 / 255.0
             )
 

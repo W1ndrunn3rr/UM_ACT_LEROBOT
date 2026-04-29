@@ -4,13 +4,16 @@ Training [ACT](https://github.com/huggingface/lerobot) policies on a pick-and-li
 
 ## Experiments
 
-| Name | Backbone | VAE | Canny |
-|------|----------|-----|-------|
-| `baseline` | ResNet18 | yes | no |
-| `resnet34_scratch` | ResNet34 | yes | no |
-| `resnet34_pretrained` | ResNet34 | yes | no |
-| `canny` | ResNet18 | yes | yes |
-| `no_vae` | ResNet18 | no | no |
+| Name | Backbone | VAE | Transform |
+|------|----------|-----|-----------|
+| `baseline` | ResNet18 | yes | `rgb` |
+| `baseline_no_vae` | ResNet18 | no | `rgb` |
+| `canny` | ResNet18 | yes | `canny` |
+| `canny_no_vae` | ResNet18 | no | `canny` |
+| `grayscale` | ResNet18 | yes | `grayscale` |
+| `sobel` | ResNet18 | yes | `sobel` |
+| `blur_canny` | ResNet18 | yes | `blur_canny` |
+| `downsample_84` | ResNet18 | yes | `downsample_84` |
 
 ## Setup
 
