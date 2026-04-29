@@ -48,7 +48,7 @@ def main(experiment_name: str):
 
     accelerator = Accelerator(
         mixed_precision="bf16",
-        kwargs_handlers=[DistributedDataParallelKwargs(find_unused_parameters=True)],
+        kwargs_handlers=[DistributedDataParallelKwargs(find_unused_parameters=False)],
     )
 
     if accelerator.is_main_process:
