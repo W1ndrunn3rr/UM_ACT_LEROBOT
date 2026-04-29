@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/kuba/Git/UM_ACT_LEROBOT/src/scripts/train.py", line 24, in <module>
+    from .src.config import EXPERIMENTS, apply_image_transform
+ImportError: attempted relative import with no known parent package

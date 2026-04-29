@@ -32,29 +32,15 @@ Log in to Weights & Biases:
 wandb login
 ```
 
-## Running training
-
-**Single experiment:**
+## Running
 
 ```bash
-"$VIRTUAL_ENV/bin/python" train.py <experiment_name>
-# e.g.
-"$VIRTUAL_ENV/bin/python" train.py baseline
-"$VIRTUAL_ENV/bin/python" train.py resnet34_scratch
-"$VIRTUAL_ENV/bin/python" train.py resnet34_pretrained
+make train EXP=baseline
+make train-all
 ```
 
-**Supported ResNet experiments sequentially:**
+Eval with filtered camera input:
 
 ```bash
-chmod +x train.bash
-./train.bash
-```
-
-Logs are saved to `logs/`, checkpoints to `outputs/train/<experiment_name>/step_XXXXXXX/`, and the final model is pushed to your Hugging Face Hub repo.
-
-**Multi-GPU** (via Accelerate):
-
-```bash
-accelerate launch train.py <experiment_name>
+make eval MODEL=W1ndrunn3rr/act_pick_and_lift_v2_canny FILTER=canny ROBOT_PORT=/dev/ttyACM0 ROBOT_ID=my_robot
 ```

@@ -21,7 +21,7 @@ from lerobot.policies.act.modeling_act import ACTPolicy
 from lerobot.datasets.factory import resolve_delta_timestamps
 from lerobot.policies.factory import make_pre_post_processors
 
-from configs import EXPERIMENTS, apply_canny
+from src.config import EXPERIMENTS, apply_image_transform
 
 torch.backends.cudnn.benchmark = True
 torch.backends.cuda.matmul.allow_tf32 = True
@@ -67,7 +67,8 @@ def main(experiment_name: str):
                 "lr": exp.lr,
                 "vision_backbone": exp.vision_backbone,
                 "use_vae": exp.use_vae,
-                "use_canny": exp.use_canny,
+                "image_transform": exp.image_transform,
+                "downsample_size": exp.downsample_size,
             },
         )
 
@@ -94,7 +95,9 @@ def main(experiment_name: str):
     )
 
     delta_timestamps = resolve_delta_timestamps(cfg, dataset_meta)
-    dataset = LeRobotDataset(dataset_id, root=dataset_local_dir, delta_timestamps=delta_timestamps)
+    dataset = LeRobotDataset(
+        dataset_id, root=dataset_local_dir, delta_timestamps=delta_timestamps
+    )
     dataloader = torch.utils.data.DataLoader(
         dataset,
         batch_size=exp.batch_size,
@@ -133,8 +136,7 @@ def main(experiment_name: str):
 
         t0 = time.perf_counter()
 
-        if exp.use_canny:
-            batch = apply_canny(batch, exp.canny_low, exp.canny_high)
+        batch = apply_image_transform(batch, exp)
 
         batch = preprocessor(batch)
 
@@ -143,7 +145,9 @@ def main(experiment_name: str):
 
         if not torch.isfinite(loss):
             if accelerator.is_main_process:
-                print(f"Non-finite loss at step {step + 1}: {loss.item()}. Stopping training.")
+                print(
+                    f"Non-finite loss at step {step + 1}: {loss.item()}. Stopping training."
+                )
             break
 
         optimizer.zero_grad(set_to_none=True)
@@ -152,7 +156,9 @@ def main(experiment_name: str):
 
         if not torch.isfinite(grad_norm):
             if accelerator.is_main_process:
-                print(f"Non-finite grad norm at step {step + 1}: {grad_norm.item()}. Skipping optimizer step.")
+                print(
+                    f"Non-finite grad norm at step {step + 1}: {grad_norm.item()}. Skipping optimizer step."
+                )
             optimizer.zero_grad(set_to_none=True)
             continue
 
@@ -171,7 +177,11 @@ def main(experiment_name: str):
         pbar.update(1)
 
         if accelerator.is_main_process and step % exp.log_freq == 0:
-            pbar.set_postfix(loss=f"{loss.item():.4f}", grad=f"{grad_norm.item():.3f}", ms=f"{step_time*1000:.0f}")
+            pbar.set_postfix(
+                loss=f"{loss.item():.4f}",
+                grad=f"{grad_norm.item():.3f}",
+                ms=f"{step_time * 1000:.0f}",
+            )
             wandb.log(
                 {
                     "loss": loss.item(),

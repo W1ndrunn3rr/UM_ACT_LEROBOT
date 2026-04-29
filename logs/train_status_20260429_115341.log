@@ -1,0 +1,6 @@
+2026-04-29 11:53:44 | FAIL(1) | baseline | logs/baseline_20260429_115341.log
+2026-04-29 11:53:46 | FAIL(1) | grayscale | logs/grayscale_20260429_115344.log
+2026-04-29 11:53:48 | FAIL(1) | canny | logs/canny_20260429_115346.log
+2026-04-29 11:53:51 | FAIL(1) | sobel | logs/sobel_20260429_115348.log
+2026-04-29 11:53:53 | FAIL(1) | blur_canny | logs/blur_canny_20260429_115351.log
+2026-04-29 11:53:55 | FAIL(1) | downsample_84 | logs/downsample_84_20260429_115353.log
