@@ -1,0 +1,5 @@
+#!/bin/bash
+#SBATCH -N 1
+#SBATCH --array=1-3
+EXPERIMENTS=(A B C)
+EXP=$${EXPERIMENTS[$$SLURM_ARRAY_TASK_ID-1]}

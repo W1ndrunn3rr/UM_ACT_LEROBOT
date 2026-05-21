@@ -137,6 +137,27 @@ train-all: ## Train models for all experiments from EXPERIMENTS
 		accelerate launch --num_processes=1 -m src.scripts.train $$exp || exit $$?; \
 	done
 
+train-wcss: ## Train models for all experiments from EXPERIMENTS via SLURM array job
+	@echo "==> Submitting $(words $(EXPERIMENTS)) experiments to SLURM array job..."
+	@echo "#!/bin/bash" > .slurm_train_all.sh
+	@echo "#SBATCH -N 1" >> .slurm_train_all.sh
+	@echo "#SBATCH -c 8" >> .slurm_train_all.sh
+	@echo "#SBATCH --mem=32gb" >> .slurm_train_all.sh
+	@echo "#SBATCH --gres=gpu:1" >> .slurm_train_all.sh
+	@echo "#SBATCH --time=12:00:00" >> .slurm_train_all.sh
+	@echo "#SBATCH --job-name=train_all" >> .slurm_train_all.sh
+	@echo "#SBATCH --output=wyniki_train_%A_%a.txt" >> .slurm_train_all.sh
+	@echo "#SBATCH --array=1-$(words $(EXPERIMENTS))" >> .slurm_train_all.sh
+	@echo "" >> .slurm_train_all.sh
+	@echo "source /usr/local/sbin/modules.sh" >> .slurm_train_all.sh
+	@echo "uv sync" >> .slurm_train_all.sh
+	@echo "source .venv/bin/activate" >> .slurm_train_all.sh
+	@echo "EXPERIMENTS=($(EXPERIMENTS))" >> .slurm_train_all.sh
+	@echo 'EXP=$${EXPERIMENTS[$$SLURM_ARRAY_TASK_ID-1]}' >> .slurm_train_all.sh
+	@echo 'echo "==> Running experiment: $$EXP"' >> .slurm_train_all.sh
+	@echo 'accelerate launch --num_processes=1 -m src.scripts.train $$EXP' >> .slurm_train_all.sh
+	@sbatch .slurm_train_all.sh
+
 check-eval-deps: ## Check whether evaluation dependencies are installed
 	@$(PYTHON_BIN) -c "import scservo_sdk" >/dev/null 2>&1 || \
 		(echo "Missing dependency: scservo_sdk"; \
