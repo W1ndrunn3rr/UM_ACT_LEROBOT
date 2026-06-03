@@ -118,7 +118,9 @@ def _record_loop_with_home_return(*args: Any, **kwargs: Any) -> Any:
         try:
             _move_so_follower_home(robot)
         except Exception:
-            logger.exception("Failed to move robot to home configuration after record loop.")
+            logger.exception(
+                "Failed to move robot to home configuration after record loop."
+            )
 
 
 lerobot_record_module.record_loop = _record_loop_with_home_return
@@ -130,7 +132,9 @@ def _disconnect_with_home_return(self: SOFollower) -> None:
     try:
         _move_so_follower_home(self)
     except Exception:
-        logger.exception("Failed to move robot to home configuration before disconnect.")
+        logger.exception(
+            "Failed to move robot to home configuration before disconnect."
+        )
     _original_disconnect(self)
 
 
