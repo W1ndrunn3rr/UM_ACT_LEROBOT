@@ -28,11 +28,29 @@ CAMERA_CONNECTION_ATTEMPTS     ?= 3
 CAMERA_CONNECTION_RETRY_DELAY_S ?= 1
 CAMERA_FOURCC            ?=
 
-EVAL_DATASET_REPO ?= W1ndrunn3rr/act_pick_and_lift_v3_baseline
-EVAL_EPISODES     ?= 3
-EVAL_TRIALS       ?= 10
-EVAL_OVERWRITE    ?= true
-EVAL_DISPLAY_DATA ?= false
+CAMERA_SIDE_INDEX        ?= 1
+CAMERA_SIDE_WIDTH        ?= 1920
+CAMERA_SIDE_HEIGHT       ?= 1080
+CAMERA_SIDE_FPS          ?= 30
+CAMERA_SIDE_BACKEND      ?= 1200
+CAMERA_SIDE_WARMUP_S     ?= 3
+
+EVAL_DATASET_REPO  ?= W1ndrunn3rr/act_pick_and_lift_v3_baseline
+EVAL_EPISODES      ?= 3
+EVAL_TRIALS        ?= 10
+EVAL_OVERWRITE     ?= true
+EVAL_DISPLAY_DATA  ?= false
+EVAL_SAVE_DATASET  ?= true
+
+_EVAL_SCRATCH_DIR  := /tmp/lerobot_eval_scratch
+
+ifeq ($(EVAL_SAVE_DATASET),false)
+_ACTIVE_DATASET_REPO := local/eval_scratch
+_DATASET_ROOT_ARG    := --dataset.root=$(_EVAL_SCRATCH_DIR)
+else
+_ACTIVE_DATASET_REPO := $(EVAL_DATASET_REPO)
+_DATASET_ROOT_ARG    :=
+endif
 
 EPISODE_TIME      ?= 30
 RESET_TIME        ?= 10
@@ -165,9 +183,9 @@ check-eval-deps: ## Check whether evaluation dependencies are installed
 		echo "  $(PYTHON_BIN) -m pip install -e ."; \
 		exit 1)
 
-eval: check-eval-deps ## Evaluate a single model  [MODEL=... FILTER=canny]
+eval: check-eval-deps ## Evaluate a single model  [MODEL=... FILTER=canny EVAL_SAVE_DATASET=false]
 	@test -n "$(MODEL)" || (echo "MODEL is required, e.g. make eval MODEL=user/policy FILTER=canny" && exit 1)
-	@if [ "$(EVAL_OVERWRITE)" = "true" ]; then \
+	@if [ "$(EVAL_OVERWRITE)" = "true" ] && [ "$(EVAL_SAVE_DATASET)" != "false" ]; then \
 		$(PYTHON_BIN) -m src.scripts.clean_lerobot_cache $(EVAL_DATASET_REPO); \
 	fi
 	HOME_ACTION='$(HOME_ACTION)' \
@@ -177,21 +195,58 @@ eval: check-eval-deps ## Evaluate a single model  [MODEL=... FILTER=canny]
 		--robot.type=$(ROBOT_TYPE) \
 		--robot.port=$(ROBOT_PORT) \
 		--robot.id=$(ROBOT_ID) \
-		--robot.cameras='{front: {type: filtered_opencv, index_or_path: $(CAMERA_INDEX), width: $(CAMERA_WIDTH), height: $(CAMERA_HEIGHT), fps: $(CAMERA_FPS), backend: $(CAMERA_BACKEND), warmup_s: $(CAMERA_WARMUP_S), connection_attempts: $(CAMERA_CONNECTION_ATTEMPTS), connection_retry_delay_s: $(CAMERA_CONNECTION_RETRY_DELAY_S), fourcc: $(if $(strip $(CAMERA_FOURCC)),$(CAMERA_FOURCC),null), filter_name: $(FILTER)}}' \
+		--robot.cameras='{front: {type: filtered_opencv, index_or_path: $(CAMERA_INDEX), width: $(CAMERA_WIDTH), height: $(CAMERA_HEIGHT), fps: $(CAMERA_FPS), backend: $(CAMERA_BACKEND), warmup_s: $(CAMERA_WARMUP_S), connection_attempts: $(CAMERA_CONNECTION_ATTEMPTS), connection_retry_delay_s: $(CAMERA_CONNECTION_RETRY_DELAY_S), fourcc: $(if $(strip $(CAMERA_FOURCC)),$(CAMERA_FOURCC),null), filter_name: $(FILTER)}, side: {type: filtered_opencv, index_or_path: $(CAMERA_SIDE_INDEX), width: $(CAMERA_SIDE_WIDTH), height: $(CAMERA_SIDE_HEIGHT), fps: $(CAMERA_SIDE_FPS), backend: $(CAMERA_SIDE_BACKEND), warmup_s: $(CAMERA_SIDE_WARMUP_S), connection_attempts: $(CAMERA_CONNECTION_ATTEMPTS), connection_retry_delay_s: $(CAMERA_CONNECTION_RETRY_DELAY_S), fourcc: null, filter_name: none}}' \
 		--display_data=$(EVAL_DISPLAY_DATA) \
-		--dataset.repo_id=$(EVAL_DATASET_REPO) \
+		--dataset.repo_id=$(_ACTIVE_DATASET_REPO) \
+		$(_DATASET_ROOT_ARG) \
 		--dataset.num_episodes=$(EVAL_EPISODES) \
 		--dataset.episode_time_s=$(EPISODE_TIME) \
 		--dataset.reset_time_s=$(RESET_TIME) \
 		--dataset.single_task=$(TASK) \
 		--dataset.push_to_hub=false \
 		--policy.path=$(MODEL)
+	@if [ "$(EVAL_SAVE_DATASET)" = "false" ]; then \
+		rm -rf $(_EVAL_SCRATCH_DIR); \
+	fi
 
 eval-all: check-eval-deps ## Evaluate all models from EVAL_MODEL_FILTERS
 	@EVAL_TRIALS='$(EVAL_TRIALS)' \
 	EVAL_MODEL_FILTERS='$(EVAL_MODEL_FILTERS)' \
 	EVAL_DATASET_REPO='$(EVAL_DATASET_REPO)' \
 	$(PYTHON_BIN) -m src.scripts.eval_all
+
+V3_BENCHMARK_EPISODES ?= 10
+V3_BENCHMARK_EPISODE_TIME ?= 30
+V3_BENCHMARK_RESET_TIME  ?= 10
+V3_BENCHMARK_DATASET_PREFIX ?= W1ndrunn3rr/eval_v3_benchmark
+
+V3_BENCHMARK_MODEL_FILTERS := \
+	W1ndrunn3rr/act_pick_and_lift_v3_baseline:none \
+	W1ndrunn3rr/act_pick_and_lift_v3_baseline_no_vae:baseline_no_vae \
+	W1ndrunn3rr/act_pick_and_lift_v3_canny:canny \
+	W1ndrunn3rr/act_pick_and_lift_v3_canny_no_vae:canny_no_vae \
+	W1ndrunn3rr/act_pick_and_lift_v3_grayscale:grayscale \
+	W1ndrunn3rr/act_pick_and_lift_v3_downsample_84:downsample_84
+
+eval-v3-benchmark: check-eval-deps ## Evaluate all v3 models — 10 episodes × 30 s each  [V3_BENCHMARK_EPISODES=10 V3_BENCHMARK_RESET_TIME=10]
+	@echo "==> Starting v3 benchmark: $(words $(V3_BENCHMARK_MODEL_FILTERS)) models × $(V3_BENCHMARK_EPISODES) episodes × $(V3_BENCHMARK_EPISODE_TIME)s"
+	@for pair in $(V3_BENCHMARK_MODEL_FILTERS); do \
+		model=$$(echo $$pair | cut -d: -f1); \
+		filter=$$(echo $$pair | cut -d: -f2); \
+		suffix=$$(basename $$model); \
+		echo ""; \
+		echo "==> model=$$model  filter=$$filter"; \
+		$(MAKE) eval \
+			MODEL=$$model \
+			FILTER=$$filter \
+			EVAL_EPISODES=$(V3_BENCHMARK_EPISODES) \
+			EPISODE_TIME=$(V3_BENCHMARK_EPISODE_TIME) \
+			RESET_TIME=$(V3_BENCHMARK_RESET_TIME) \
+			EVAL_SAVE_DATASET=false \
+			EVAL_OVERWRITE=false || exit $$?; \
+	done
+	@echo ""
+	@echo "==> v3 benchmark complete."
 
 gradcam: ## Render offline ACT Grad-CAM video  [GRADCAM_POLICY_PATH=... GRADCAM_TARGET_DIM=0]
 	$(PYTHON_BIN) -m src.scripts.gradcam_act \
